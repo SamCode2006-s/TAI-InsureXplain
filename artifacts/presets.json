@@ -1,0 +1,77 @@
+[
+ {
+  "name": "Typical renewal",
+  "values": {
+   "Exposure": 0.49,
+   "VehPower": 6.0,
+   "VehAge": 6.0,
+   "DrivAge": 44.0,
+   "BonusMalus": 50.0,
+   "Density": 391.0,
+   "Area": "C",
+   "VehBrand": "B12",
+   "VehGas": "Regular",
+   "Region": "R24"
+  }
+ },
+ {
+  "name": "Careful long-term driver",
+  "values": {
+   "Exposure": 0.6,
+   "VehPower": 5.0,
+   "VehAge": 11.0,
+   "DrivAge": 52.0,
+   "BonusMalus": 50.0,
+   "Density": 120.0,
+   "Area": "B",
+   "VehBrand": "B12",
+   "VehGas": "Regular",
+   "Region": "R24"
+  }
+ },
+ {
+  "name": "Young driver, new car",
+  "values": {
+   "Exposure": 1.0,
+   "VehPower": 9.0,
+   "VehAge": 2.0,
+   "DrivAge": 19.0,
+   "BonusMalus": 104.0,
+   "Density": 170.0,
+   "Area": "C",
+   "VehBrand": "B2",
+   "VehGas": "Regular",
+   "Region": "R93"
+  }
+ },
+ {
+  "name": "Senior, full-year cover",
+  "values": {
+   "Exposure": 1.0,
+   "VehPower": 6.0,
+   "VehAge": 2.0,
+   "DrivAge": 67.0,
+   "BonusMalus": 76.0,
+   "Density": 96.0,
+   "Area": "C",
+   "VehBrand": "B2",
+   "VehGas": "Regular",
+   "Region": "R24"
+  }
+ },
+ {
+  "name": "City commuter",
+  "values": {
+   "Exposure": 0.9,
+   "VehPower": 7.0,
+   "VehAge": 3.0,
+   "DrivAge": 34.0,
+   "BonusMalus": 85.0,
+   "Density": 9000.0,
+   "Area": "F",
+   "VehBrand": "B3",
+   "VehGas": "Diesel",
+   "Region": "R11"
+  }
+ }
+]

@@ -1,0 +1,30 @@
+INSUREXPLAIN — SIMULATED MOTOR INSURANCE RISK EXPLANATION
+==============================================================
+Generated: 2026-10-25
+Reference: DEMO-POLICY-001 (fictional demonstration reference)
+
+Purpose
+This educational notice explains a model prediction about recorded claim occurrence.
+It is NOT an actual underwriting decision, rejection, premium quote, or legal adverse-action notice.
+
+Model output: predicted probability of at least one recorded claim = 15.7%
+Model class at threshold 0.50: No claim
+
+Top features pushing the model toward claim occurrence:
+- area category (category/value A): contribution 0.0009 on the SHAP output scale.
+- fuel type (category/value Regular): contribution 0.0009 on the SHAP output scale.
+- region (category/value R11): contribution 0.0008 on the SHAP output scale.
+
+Examples of features pushing away from claim occurrence:
+- vehicle age: contribution -0.0750 on the SHAP output scale.
+- policy exposure period: contribution -0.0477 on the SHAP output scale.
+- population density: contribution -0.0449 on the SHAP output scale.
+
+Important limitations
+- These are model associations, not proof that a feature caused a claim.
+- The underlying dataset records claims; it does not contain actual approval/denial decisions.
+- This output must not be used by itself to deny coverage or set a real premium.
+- Any real deployment would require actuarial validation, calibration, human review, fairness testing, and jurisdiction-specific legal review.
+
+Sample next step: request human review of the underlying information and model limitations.
+This sample workflow does not assert a legal right or replace applicable complaint/appeal procedures.

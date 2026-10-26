@@ -1,0 +1,7 @@
+flask>=3.0
+gunicorn>=22.0
+numpy>=1.26
+joblib>=1.3
+scipy>=1.11
+# The shipped model was pickled with scikit-learn 1.6.1; keep the same minor version.
+scikit-learn==1.6.1

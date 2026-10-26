@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>InsureXplain — Interpretable Underwriting Engine</title>
+<meta name="description" content="Dual-explanation underwriting engine: global SHAP, local SHAP/LIME, adverse action notices and a regulatory compliance report.">
+<meta name="theme-color" content="#04050a">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 3l11 6.5v13L16 29 5 22.500v-13z' fill='none' stroke='%2398a2ff' stroke-width='2'/%3E%3Ccircle cx='16' cy='16' r='3' fill='%2398a2ff'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700&family=Figtree:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<canvas id="bg" aria-hidden="true"></canvas>
+<div class="floor" aria-hidden="true"></div>
+<div class="vignette" aria-hidden="true"></div>
+
+<header class="top">
+  <div class="brand">
+    <svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="M16 3l11 6.5v13L16 29 5 22.5v-13z" stroke="#98a2ff" stroke-width="1.6"/><path d="M16 3v26M5 9.5l22 13M27 9.5l-22 13" stroke="#98a2ff" stroke-opacity=".35" stroke-width="1"/><circle cx="16" cy="16" r="2.6" fill="#98a2ff"/></svg>
+    <span>InsureXplain</span>
+  </div>
+  <nav class="tabs" id="tabs" role="tablist" aria-label="Sections">
+    <span class="tab-pill" id="pill"></span>
+    <button class="tab" role="tab" data-view="underwrite">Underwrite</button>
+    <button class="tab" role="tab" data-view="notice">Adverse notice</button>
+    <button class="tab" role="tab" data-view="global">Global view</button>
+    <button class="tab" role="tab" data-view="compliance">Compliance</button>
+    <button class="tab" role="tab" data-view="pipeline">Pipeline</button>
+  </nav>
+  <div class="status"><span class="dot" id="dot"></span><span id="statusText">Connecting…</span></div>
+</header>
+
+<main>
+  <!-- ============ UNDERWRITE ============ -->
+  <section class="view" id="v-underwrite" data-title="Underwrite">
+    <div class="hero">
+      <h1 id="heroTitle">Underwriting that can explain itself.</h1>
+      <p class="lede">Move any rating factor and watch the risk score, its exact Shapley attribution and a LIME cross-check update together. Every flag ships with its top three reasons.</p>
+    </div>
+    <div class="console">
+      <aside class="panel form" aria-label="Applicant">
+        <header><div><h3>Applicant</h3><p>Motor policy rating factors</p></div></header>
+        <div class="chips" id="presets"></div>
+        <div id="fields"></div>
+      </aside>
+      <div class="stack">
+        <div class="panel verdict" id="verdictCard">
+          <div class="ring" role="img" aria-label="Predicted claim likelihood">
+            <svg viewBox="0 0 236 236">
+              <circle class="halo" cx="118" cy="118" r="113"/>
+              <circle class="track" cx="118" cy="118" r="96"/>
+              <circle class="arc" id="arc" cx="118" cy="118" r="96" stroke="var(--protect)" style="color:var(--protect)"/>
+              <line class="tick" id="tick" x1="204" y1="118" x2="228" y2="118"/>
+            </svg>
+            <div class="center"><div class="big"><span id="pctNum">0</span><sup>%</sup></div><div class="cap">predicted claim likelihood</div></div>
+          </div>
+          <div>
+            <span class="state ok" id="state"><i></i><span id="stateText">Scoring…</span></span>
+            <h2 id="verdictHead">Reading the applicant…</h2>
+            <p class="muted" id="verdictSub" style="margin:0"></p>
+            <div class="thr">
+              <div class="row"><span>Decision threshold</span><output id="thrOut">0.50</output></div>
+              <input type="range" id="thr" min="0.15" max="0.70" step="0.01" value="0.50" aria-label="Decision threshold">
+            </div>
+            <p class="note">The forest is trained with balanced class weights, so this score ranks risk but is not a calibrated probability. The amber tick on the ring marks the threshold.</p>
+          </div>
+        </div>
+
+        <div class="panel">
+          <header><div><h3>Force plot</h3><p>How each factor pushes the score away from the portfolio baseline</p></div></header>
+          <div class="force" id="force"></div>
+          <div class="force-axis" id="forceAxis"></div>
+        </div>
+
+        <div class="panel">
+          <header>
+            <div><h3>Local explanation</h3><p>Marginal contribution of every factor, in percentage points of the score</p></div>
+            <div class="seg" id="mode" role="group" aria-label="Explainer">
+              <button aria-pressed="false" data-m="shap">SHAP</button><button aria-pressed="false" data-m="lime">LIME</button><button aria-pressed="true" data-m="both">Both</button>
+            </div>
+          </header>
+          <div class="legend"><span><i class="sw a"></i>Raises risk</span><span><i class="sw p"></i>Lowers risk</span><span><i class="sw l"></i>LIME estimate</span><span><span class="tag">age</span><span class="tag">geo</span> sensitive or proxy factor</span></div>
+          <div class="crows" id="crows"></div>
+          <div class="agree" id="agree"></div>
+        </div>
+
+        <div class="panel">
+          <header><div><h3>Reviewer notes</h3><p>Internal checks before any notice is sent</p></div></header>
+          <div class="flags" id="flags"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ NOTICE ============ -->
+  <section class="view" id="v-notice" data-title="Adverse notice">
+    <div class="head"><h2>Adverse Action Notice</h2><p class="lede">The same Shapley values, translated into plain language for the customer. Change the applicant on the Underwrite tab and the letter rewrites itself.</p></div>
+    <div class="notice-wrap">
+      <article class="panel letter" id="letter"><div class="skeleton">Preparing notice…</div></article>
+      <aside class="stack">
+        <div class="panel actions">
+          <h3>Export</h3>
+          <button class="btn primary" id="dlTxt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v12m0 0l-5-5m5 5l5-5M4 20h16"/></svg>Download .txt</button>
+          <button class="btn" id="prt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V3h12v6M6 18H4v-7h16v7h-2M7 14h10v7H7z"/></svg>Print or save PDF</button>
+          <button class="btn" id="cpy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 012-2h9"/></svg>Copy text</button>
+        </div>
+        <div class="panel side-print"><header><div><h3>Reviewer notes</h3><p>Not part of the customer letter</p></div></header><div class="flags" id="flags2"></div></div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ============ GLOBAL ============ -->
+  <section class="view" id="v-global" data-title="Global view">
+    <div class="head"><h2>Global explanation</h2><p class="lede">Local explanations answer “why this applicant”. The global view answers “what does the model rely on overall”, which is what a regulator audits. Select a factor to see how the model's average output moves as that factor changes.</p></div>
+    <div class="split">
+      <div class="panel" id="gPanel"><div class="skeleton">Loading SHAP summary…</div></div>
+      <div class="stack">
+        <div class="panel" id="pdpPanel"><div class="skeleton">Select a factor</div></div>
+        <div class="panel" id="catPanel"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ COMPLIANCE ============ -->
+  <section class="view" id="v-compliance" data-title="Compliance">
+    <div class="head"><h2>Regulatory compliance report</h2><p class="lede">Group-level flag rates, error gaps and pairwise feature interactions, with automated review signals. These are diagnostics for human review, not legal conclusions.</p></div>
+    <div class="signals" id="signals"><div class="skeleton">Auditing groups…</div></div>
+    <div class="panel" id="groupPanel"></div>
+    <div class="split mt">
+      <div class="panel" id="heatPanel"></div>
+      <div class="panel" id="reportPanel"></div>
+    </div>
+  </section>
+
+  <!-- ============ PIPELINE ============ -->
+  <section class="view" id="v-pipeline" data-title="Pipeline">
+    <div class="head"><h2>Model and method</h2><p class="lede">A claim-occurrence classifier on 678,013 French motor policies, wrapped in a dual-explanation engine.</p></div>
+    <div class="flow">
+      <div class="step"><h3>Clean</h3><p>freMTPL2freq with ClaimNb and IDpol removed. Target is 1 when ClaimNb &gt; 0.</p></div>
+      <div class="step"><h3>Prepare</h3><p>Median imputation and scaling for 6 numeric factors; mode imputation and one-hot for 4 categorical factors.</p></div>
+      <div class="step"><h3>Train</h3><p>Random Forest, 150 trees, leaf size 5, balanced subsample weights.</p></div>
+      <div class="step"><h3>Explain</h3><p>Exact Shapley over 10 factors plus a LIME surrogate. Global SHAP from the training notebook.</p></div>
+      <div class="step"><h3>Communicate</h3><p>Top-three adverse factors become a plain-language notice and a compliance report.</p></div>
+    </div>
+    <div class="cols2 mt">
+      <div class="panel"><header><div><h3>Model comparison</h3><p>Held-out test set</p></div></header><div class="tbl-scroll" id="modelTable"></div>
+        <p class="note">Random Forest was selected for its ROC-AUC and precision. Logistic Regression catches more claims (recall 0.62) but at a precision of only 0.07, so most of its flags are false alarms.</p></div>
+      <div class="panel"><header><div><h3>Marginal contribution</h3><p>What “SHAP” computes</p></div></header>
+        <div class="formula">φᵢ = Σ<sub>S ⊆ N∖{i}</sub> [ |S|! (n−|S|−1)! / n! ] · ( v(S ∪ {i}) − v(S) )</div>
+        <p class="muted small" style="margin:0">Each factor's contribution is its average marginal effect over every possible coalition of the other factors. With ten factors that is 1,024 coalitions, so this app evaluates the formula exactly against 24 reference policies instead of approximating it. The contributions always sum to the gap between the applicant's score and the baseline.</p></div>
+    </div>
+    <div class="cols2 mt">
+      <div class="panel"><h3 style="margin-bottom:10px">Global and local, together</h3><p class="muted" style="margin:0">Global SHAP summarises the whole portfolio so compliance can test for discriminatory reliance on age or geography. Local SHAP and LIME explain one applicant, which supplies the three adverse reasons in a notice. When the two local methods disagree the app says so.</p></div>
+      <div class="panel"><h3 style="margin-bottom:10px">Honest limits</h3><p class="muted" style="margin:0">The target is claim occurrence, not underwriting approval, severity or fraud. Reference policies are rebuilt from the fitted preprocessor and group sizes, because the dataset is not bundled. Exposure dominates the model, which suggests it should be an actuarial offset. This is an educational prototype, not a certified pricing system.</p></div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="who"><span class="name">SAMBHAV SINGH CHAUDHARY</span><span class="cls">TY-AIDS</span></div>
+  <span class="proj">InsureXplain: Interpretable Underwriting Engine for Life and Motor Insurance Claims, Micro Project in Explainable AI</span>
+</footer>
+<div class="toast" id="toast" role="status"></div>
+
+<script src="/bg.js"></script>
+<script src="/app.js"></script>
+</body>
+</html>
